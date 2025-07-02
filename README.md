@@ -1,2 +1,2 @@
 # Bhavya Fabrication Works Website
-React + Tailwind project for fabrication services in Hyderabad.# bhavaya-fabrication
+React + Tailwind project for fabrication services in Hyderabad.

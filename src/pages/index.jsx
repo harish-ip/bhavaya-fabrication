@@ -46,8 +46,96 @@ export default function HomePage() {
   const [thickness, setThickness] = useState(0);
   const [activeTab, setActiveTab] = useState('home');
 
-  const weight = (length * breadth * thickness * 7.85) / 1000; // in kg
-  const cost = weight * 102;
+  // Calculator options
+  const [grillType, setGrillType] = useState('window');
+  const [metalType, setMetalType] = useState('steel');
+
+  // Contact form state
+  const [contactForm, setContactForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    subject: '',
+    message: '',
+    projectType: ''
+  });
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState(null); // 'success', 'error', or null
+
+  // Calculate weight based on metal type (density in g/cm³)
+  const metalDensity = {
+    steel: 7.85,        // Mild Steel
+    stainless: 8.0,     // Stainless Steel
+    aluminum: 2.7,      // Aluminum
+    iron: 7.87          // Cast Iron
+  };
+
+  // Calculate cost per kg based on metal type and grill type
+  const getMetalRate = () => {
+    const baseRates = {
+      steel: 102,         // ₹102 per kg for mild steel
+      stainless: 450,     // ₹450 per kg for stainless steel
+      aluminum: 280,      // ₹280 per kg for aluminum
+      iron: 95            // ₹95 per kg for cast iron
+    };
+
+    const grillMultiplier = {
+      window: 1.0,        // Standard window grills
+      security: 1.3,      // Security grills (more complex)
+      decorative: 1.5,    // Decorative grills (intricate designs)
+      balcony: 1.2,       // Balcony railings
+      gate: 1.4,          // Gate grills (heavy duty)
+      staircase: 1.6      // Staircase railings (complex fabrication)
+    };
+
+    return baseRates[metalType] * grillMultiplier[grillType];
+  };
+
+  const weight = (length * breadth * thickness * metalDensity[metalType]) / 1000; // in kg
+  const cost = weight * getMetalRate();
+
+  // Handle contact form input changes
+  const handleContactInputChange = (e) => {
+    const { name, value } = e.target;
+    setContactForm(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  // Handle contact form submission
+  const handleContactSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setSubmitStatus(null);
+
+    try {
+      // Simulate form submission (replace with actual API call)
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      // For now, we'll just log the form data and show success
+      console.log('Contact Form Submitted:', contactForm);
+
+      setSubmitStatus('success');
+
+      // Reset form after successful submission
+      setContactForm({
+        name: '',
+        email: '',
+        phone: '',
+        subject: '',
+        message: '',
+        projectType: ''
+      });
+
+    } catch (error) {
+      console.error('Form submission error:', error);
+      setSubmitStatus('error');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const tabs = [
     { id: 'home', label: 'Home', shortLabel: 'Home', icon: '🏠' },
@@ -278,10 +366,10 @@ export default function HomePage() {
               >
                 <div className="text-center mb-8 sm:mb-12">
                   <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-display font-bold text-steel-900 mb-4 sm:mb-6">
-                    Steel Quote <span className="text-accent-600">Calculator</span>
+                    Metal Grill <span className="text-accent-600">Calculator</span>
                   </h2>
                   <p className="text-base sm:text-lg md:text-xl text-steel-600 max-w-2xl mx-auto leading-relaxed">
-                    Get an instant estimate for your steel fabrication project. Enter your dimensions below.
+                    Get an instant estimate for your grill fabrication project. Choose your grill type, metal, and enter dimensions.
                   </p>
                 </div>
 
@@ -332,6 +420,59 @@ export default function HomePage() {
                       </div>
                     </div>
 
+                    {/* Grill Type and Metal Type Selection */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
+                      <div>
+                        <label className="block text-sm font-medium text-steel-700 mb-2">
+                          <span className="flex items-center gap-2">
+                            <svg className="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                            </svg>
+                            Grill Type
+                          </span>
+                        </label>
+                        <select
+                          value={grillType}
+                          onChange={(e) => setGrillType(e.target.value)}
+                          className="w-full px-4 py-3 border border-steel-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 bg-white"
+                        >
+                          <option value="window">Window Grills</option>
+                          <option value="security">Security Grills</option>
+                          <option value="decorative">Decorative Grills</option>
+                          <option value="balcony">Balcony Railings</option>
+                          <option value="gate">Gate Grills</option>
+                          <option value="staircase">Staircase Railings</option>
+                        </select>
+                        <p className="text-xs text-steel-500 mt-1">
+                          Different types have varying complexity and pricing
+                        </p>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-steel-700 mb-2">
+                          <span className="flex items-center gap-2">
+                            <svg className="w-5 h-5 text-accent-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                            </svg>
+                            Metal Type
+                          </span>
+                        </label>
+                        <select
+                          value={metalType}
+                          onChange={(e) => setMetalType(e.target.value)}
+                          className="w-full px-4 py-3 border border-steel-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 bg-white"
+                        >
+                          <option value="steel">Mild Steel (₹102/kg)</option>
+                          <option value="stainless">Stainless Steel (₹450/kg)</option>
+                          <option value="aluminum">Aluminum (₹280/kg)</option>
+                          <option value="iron">Cast Iron (₹95/kg)</option>
+                        </select>
+                        <p className="text-xs text-steel-500 mt-1">
+                          Base rates shown, final price varies by grill type
+                        </p>
+                      </div>
+                    </div>
+
                     {/* Results */}
                     {(length > 0 && breadth > 0 && thickness > 0) && (
                       <motion.div
@@ -340,23 +481,65 @@ export default function HomePage() {
                         transition={{ duration: 0.3 }}
                         className="bg-gradient-to-r from-primary-50 to-accent-50 rounded-2xl p-6 sm:p-8 mb-6 sm:mb-8"
                       >
+                        {/* Project Summary */}
+                        <div className="bg-white rounded-xl p-4 sm:p-6 shadow-soft mb-6">
+                          <h4 className="text-lg font-semibold text-steel-900 mb-4 text-center">Project Summary</h4>
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
+                            <div className="text-center">
+                              <div className="font-medium text-steel-900">
+                                {grillType.charAt(0).toUpperCase() + grillType.slice(1).replace(/([A-Z])/g, ' $1')}
+                              </div>
+                              <div className="text-steel-500">Grill Type</div>
+                            </div>
+                            <div className="text-center">
+                              <div className="font-medium text-steel-900">
+                                {metalType === 'steel' ? 'Mild Steel' :
+                                 metalType === 'stainless' ? 'Stainless Steel' :
+                                 metalType === 'aluminum' ? 'Aluminum' : 'Cast Iron'}
+                              </div>
+                              <div className="text-steel-500">Metal Type</div>
+                            </div>
+                            <div className="text-center">
+                              <div className="font-medium text-steel-900">
+                                {length} × {breadth} × {thickness} cm
+                              </div>
+                              <div className="text-steel-500">Dimensions</div>
+                            </div>
+                            <div className="text-center">
+                              <div className="font-medium text-steel-900">
+                                ₹{getMetalRate().toFixed(0)}/kg
+                              </div>
+                              <div className="text-steel-500">Rate</div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Cost Breakdown */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 text-center">
                           <div className="bg-white rounded-xl p-4 sm:p-6 shadow-soft">
                             <div className="text-2xl sm:text-3xl font-bold text-primary-600 mb-2">
                               {weight.toFixed(2)} kg
                             </div>
                             <div className="text-steel-600 font-medium">Estimated Weight</div>
+                            <div className="text-xs text-steel-500 mt-1">
+                              Based on {metalType === 'steel' ? 'mild steel' :
+                                       metalType === 'stainless' ? 'stainless steel' :
+                                       metalType === 'aluminum' ? 'aluminum' : 'cast iron'} density
+                            </div>
                           </div>
                           <div className="bg-white rounded-xl p-4 sm:p-6 shadow-soft">
                             <div className="text-2xl sm:text-3xl font-bold text-accent-600 mb-2">
                               ₹{cost.toFixed(0)}
                             </div>
                             <div className="text-steel-600 font-medium">Estimated Cost</div>
+                            <div className="text-xs text-steel-500 mt-1">
+                              Including {grillType} complexity factor
+                            </div>
                           </div>
                         </div>
                         <div className="text-center mt-4 sm:mt-6">
                           <p className="text-sm text-steel-500 mb-4">
-                            *This is a rough estimate. Final pricing may vary based on design complexity and material specifications.
+                            *This is a rough estimate. Final pricing may vary based on design complexity, finishing, and installation requirements.
                           </p>
                           <Button
                             onClick={() => setActiveTab('contact')}
@@ -482,12 +665,53 @@ export default function HomePage() {
                   <Card>
                     <CardContent className="p-6 sm:p-8">
                       <h3 className="text-xl sm:text-2xl font-bold text-steel-900 mb-6">Send us a Message</h3>
-                      <form className="space-y-4 sm:space-y-6">
+
+                      {/* Success Message */}
+                      {submitStatus === 'success' && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="mb-6 p-4 bg-success-50 border border-success-200 rounded-xl"
+                        >
+                          <div className="flex items-center">
+                            <svg className="w-5 h-5 text-success-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                            <p className="text-success-800 font-medium">
+                              Thank you! Your message has been sent successfully. We'll get back to you within 24 hours.
+                            </p>
+                          </div>
+                        </motion.div>
+                      )}
+
+                      {/* Error Message */}
+                      {submitStatus === 'error' && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="mb-6 p-4 bg-danger-50 border border-danger-200 rounded-xl"
+                        >
+                          <div className="flex items-center">
+                            <svg className="w-5 h-5 text-danger-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <p className="text-danger-800 font-medium">
+                              Sorry, there was an error sending your message. Please try again or call us directly.
+                            </p>
+                          </div>
+                        </motion.div>
+                      )}
+
+                      <form onSubmit={handleContactSubmit} className="space-y-4 sm:space-y-6">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <Input
                             type="text"
+                            name="name"
+                            value={contactForm.name}
+                            onChange={handleContactInputChange}
                             placeholder="Your Name"
                             label="Full Name"
+                            required
                             icon={
                               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -496,8 +720,12 @@ export default function HomePage() {
                           />
                           <Input
                             type="tel"
-                            placeholder="Your Phone"
+                            name="phone"
+                            value={contactForm.phone}
+                            onChange={handleContactInputChange}
+                            placeholder="+91 98765 43210"
                             label="Phone Number"
+                            required
                             icon={
                               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
@@ -505,26 +733,73 @@ export default function HomePage() {
                             }
                           />
                         </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <Input
+                            type="email"
+                            name="email"
+                            value={contactForm.email}
+                            onChange={handleContactInputChange}
+                            placeholder="your.email@example.com"
+                            label="Email Address"
+                            required
+                            icon={
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                              </svg>
+                            }
+                          />
+                          <div>
+                            <label className="block text-sm font-medium text-steel-700 mb-2">Project Type</label>
+                            <select
+                              name="projectType"
+                              value={contactForm.projectType}
+                              onChange={handleContactInputChange}
+                              className="w-full px-4 py-3 border border-steel-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200"
+                            >
+                              <option value="">Select Project Type</option>
+                              <option value="railing">Railings</option>
+                              <option value="gate">Gates</option>
+                              <option value="grill">Window Grills</option>
+                              <option value="shed">Sheds</option>
+                              <option value="staircase">Staircases</option>
+                              <option value="other">Other</option>
+                            </select>
+                          </div>
+                        </div>
                         <Input
-                          type="email"
-                          placeholder="Your Email"
-                          label="Email Address"
+                          type="text"
+                          name="subject"
+                          value={contactForm.subject}
+                          onChange={handleContactInputChange}
+                          placeholder="Brief description of your project"
+                          label="Subject"
+                          required
                           icon={
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-1.586l-4.707 4.707z" />
                             </svg>
                           }
                         />
                         <div>
-                          <label className="block text-sm font-medium text-steel-700 mb-2">Project Details</label>
+                          <label className="block text-sm font-medium text-steel-700 mb-2">Message</label>
                           <textarea
+                            name="message"
+                            value={contactForm.message}
+                            onChange={handleContactInputChange}
                             rows={4}
-                            placeholder="Tell us about your project requirements..."
-                            className="w-full px-4 py-3 border border-steel-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
-                          />
+                            placeholder="Tell us more about your project requirements, dimensions, timeline, etc."
+                            className="w-full px-4 py-3 border border-steel-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 resize-none"
+                            required
+                          ></textarea>
                         </div>
-                        <Button className="w-full" size="lg">
-                          Send Message
+                        <Button
+                          type="submit"
+                          size="lg"
+                          className="w-full"
+                          loading={isSubmitting}
+                          disabled={isSubmitting}
+                        >
+                          {isSubmitting ? 'Sending Message...' : 'Send Message'}
                         </Button>
                       </form>
                     </CardContent>
