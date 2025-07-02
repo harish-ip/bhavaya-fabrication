@@ -40,6 +40,28 @@ const ServiceIcons = {
   ),
 };
 
+// ===== PRICING CONFIGURATION SECTION =====
+// 🔧 EASILY UPDATE THESE RATES TO MANAGE PRICING
+const PRICING_CONFIG = {
+  // Metal base rates per kg (₹)
+  metalRates: {
+    steel: 102,         // Mild Steel - Most common, affordable
+    stainless: 450,     // Stainless Steel - Premium, corrosion resistant
+    aluminum: 280,      // Aluminum - Lightweight, rust-free
+    iron: 95            // Cast Iron - Traditional, heavy-duty
+  },
+
+  // Grill complexity multipliers (affects final price)
+  grillComplexity: {
+    window: 1.0,        // Window Grills - Standard fabrication
+    security: 1.3,      // Security Grills - Reinforced, thicker bars
+    decorative: 1.5,    // Decorative Grills - Intricate designs, artistic work
+    balcony: 1.2,       // Balcony Railings - Height requirements, safety standards
+    gate: 1.4,          // Gate Grills - Heavy-duty hinges, locking mechanisms
+    staircase: 1.6      // Staircase Railings - Complex angles, precise measurements
+  }
+};
+
 export default function HomePage() {
   const [length, setLength] = useState(0);
   const [breadth, setBreadth] = useState(0);
@@ -71,25 +93,9 @@ export default function HomePage() {
     iron: 7.87          // Cast Iron
   };
 
-  // Calculate cost per kg based on metal type and grill type
+  // Calculate final rate per kg using centralized pricing config
   const getMetalRate = () => {
-    const baseRates = {
-      steel: 102,         // ₹102 per kg for mild steel
-      stainless: 450,     // ₹450 per kg for stainless steel
-      aluminum: 280,      // ₹280 per kg for aluminum
-      iron: 95            // ₹95 per kg for cast iron
-    };
-
-    const grillMultiplier = {
-      window: 1.0,        // Standard window grills
-      security: 1.3,      // Security grills (more complex)
-      decorative: 1.5,    // Decorative grills (intricate designs)
-      balcony: 1.2,       // Balcony railings
-      gate: 1.4,          // Gate grills (heavy duty)
-      staircase: 1.6      // Staircase railings (complex fabrication)
-    };
-
-    return baseRates[metalType] * grillMultiplier[grillType];
+    return PRICING_CONFIG.metalRates[metalType] * PRICING_CONFIG.grillComplexity[grillType];
   };
 
   const weight = (length * breadth * thickness * metalDensity[metalType]) / 1000; // in kg
@@ -462,10 +468,10 @@ export default function HomePage() {
                           onChange={(e) => setMetalType(e.target.value)}
                           className="w-full px-4 py-3 border border-steel-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 bg-white"
                         >
-                          <option value="steel">Mild Steel (₹102/kg)</option>
-                          <option value="stainless">Stainless Steel (₹450/kg)</option>
-                          <option value="aluminum">Aluminum (₹280/kg)</option>
-                          <option value="iron">Cast Iron (₹95/kg)</option>
+                          <option value="steel">Mild Steel (₹{PRICING_CONFIG.metalRates.steel}/kg)</option>
+                          <option value="stainless">Stainless Steel (₹{PRICING_CONFIG.metalRates.stainless}/kg)</option>
+                          <option value="aluminum">Aluminum (₹{PRICING_CONFIG.metalRates.aluminum}/kg)</option>
+                          <option value="iron">Cast Iron (₹{PRICING_CONFIG.metalRates.iron}/kg)</option>
                         </select>
                         <p className="text-xs text-steel-500 mt-1">
                           Base rates shown, final price varies by grill type
