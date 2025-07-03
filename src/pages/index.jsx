@@ -72,6 +72,35 @@ export default function HomePage() {
   const [grillType, setGrillType] = useState('window');
   const [metalType, setMetalType] = useState('steel');
 
+  // Unit conversion options
+  const [lengthUnit, setLengthUnit] = useState('cm');
+  const [breadthUnit, setBreadthUnit] = useState('cm');
+  const [thicknessUnit, setThicknessUnit] = useState('cm');
+
+  // Function to navigate to calculator with pre-selected grill type
+  const goToCalculator = (serviceType = null) => {
+    if (serviceType) {
+      // Map service types to grill types
+      const serviceToGrillMap = {
+        'Balcony Railings': 'balcony',
+        'Window Grills': 'window',
+        'Steel Gates': 'gate',
+        'Staircase Railings': 'staircase',
+        'Custom Fabrication': 'decorative',
+        'Sheds': 'window' // Default to window for sheds
+      };
+
+      const mappedGrillType = serviceToGrillMap[serviceType];
+      if (mappedGrillType) {
+        setGrillType(mappedGrillType);
+        // Show notification
+        setQuoteNotification(`${serviceType} selected in calculator!`);
+        setTimeout(() => setQuoteNotification(null), 3000);
+      }
+    }
+    setActiveTab('calculator');
+  };
+
   // Contact form state
   const [contactForm, setContactForm] = useState({
     name: '',
@@ -83,7 +112,10 @@ export default function HomePage() {
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitStatus, setSubmitStatus] = useState(null); // 'success', 'error', or null
+  const [submitStatus, setSubmitStatus] = useState(null);
+
+  // Quote notification state
+  const [quoteNotification, setQuoteNotification] = useState(null); // 'success', 'error', or null
 
   // Calculate weight based on metal type (density in g/cm³)
   const metalDensity = {
@@ -93,12 +125,29 @@ export default function HomePage() {
     iron: 7.87          // Cast Iron
   };
 
+  // ===== UNIT CONVERSION FUNCTIONS =====
+  const convertToCm = (value, unit) => {
+    const conversions = {
+      'cm': 1,           // Centimeters (base unit)
+      'mm': 0.1,         // Millimeters to cm
+      'inch': 2.54,      // Inches to cm
+      'ft': 30.48,       // Feet to cm
+      'm': 100           // Meters to cm
+    };
+    return value * conversions[unit];
+  };
+
+  // Convert all dimensions to cm for calculation
+  const lengthInCm = convertToCm(length, lengthUnit);
+  const breadthInCm = convertToCm(breadth, breadthUnit);
+  const thicknessInCm = convertToCm(thickness, thicknessUnit);
+
   // Calculate final rate per kg using centralized pricing config
   const getMetalRate = () => {
     return PRICING_CONFIG.metalRates[metalType] * PRICING_CONFIG.grillComplexity[grillType];
   };
 
-  const weight = (length * breadth * thickness * metalDensity[metalType]) / 1000; // in kg
+  const weight = (lengthInCm * breadthInCm * thicknessInCm * metalDensity[metalType]) / 1000; // in kg
   const cost = weight * getMetalRate();
 
   // Handle contact form input changes
@@ -344,16 +393,26 @@ export default function HomePage() {
                       transition={{ duration: 0.6, delay: idx * 0.1 }}
                     >
                       <Card variant="elevated" className="h-full hover:shadow-glow transition-all duration-300 group">
-                        <CardContent className="p-6 sm:p-8">
+                        <CardContent className="p-6 sm:p-8 flex flex-col h-full">
                           <div className={`w-16 h-16 rounded-2xl bg-${service.color}-100 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300`}>
                             {service.icon}
                           </div>
                           <CardTitle className="text-xl sm:text-2xl font-bold text-steel-900 mb-4">
                             {service.title}
                           </CardTitle>
-                          <CardDescription className="text-steel-600 leading-relaxed">
+                          <CardDescription className="text-steel-600 leading-relaxed mb-6 flex-grow">
                             {service.desc}
                           </CardDescription>
+                          <Button
+                            onClick={() => goToCalculator(service.title)}
+                            variant="outline"
+                            className="w-full mt-auto group-hover:bg-primary-600 group-hover:text-white group-hover:border-primary-600 transition-all duration-300 hover:shadow-lg hover:scale-105"
+                          >
+                            <svg className="w-4 h-4 mr-2 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                            </svg>
+                            Get a Quote
+                          </Button>
                         </CardContent>
                       </Card>
                     </motion.div>
@@ -375,54 +434,133 @@ export default function HomePage() {
                     Metal Grill <span className="text-accent-600">Calculator</span>
                   </h2>
                   <p className="text-base sm:text-lg md:text-xl text-steel-600 max-w-2xl mx-auto leading-relaxed">
-                    Get an instant estimate for your grill fabrication project. Choose your grill type, metal, and enter dimensions.
+                    Get an instant estimate for your grill fabrication project. Choose your grill type, metal, and enter dimensions in any unit.
                   </p>
+                  <div className="mt-4 p-3 bg-blue-50 rounded-lg max-w-2xl mx-auto">
+                    <p className="text-sm text-blue-800 text-center">
+                      <span className="font-medium">📏 Unit Converter:</span> Enter measurements in cm, mm, inches, feet, or meters - we'll convert automatically!
+                    </p>
+                  </div>
                 </div>
+
+                {/* Quote Notification */}
+                {quoteNotification && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    className="mb-6 p-4 bg-green-50 border border-green-200 rounded-xl max-w-2xl mx-auto"
+                  >
+                    <p className="text-green-800 font-medium text-center">
+                      ✅ {quoteNotification}
+                    </p>
+                  </motion.div>
+                )}
 
                 <Card variant="glass" className="backdrop-blur-sm">
                   <CardContent className="p-4 sm:p-6 lg:p-8 xl:p-12">
+                    {/* Dimensions with Unit Converter */}
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
+                      {/* Length Input with Unit Selection */}
                       <div>
-                        <Input
-                          type="number"
-                          placeholder="Length (cm)"
-                          label="Length"
-                          icon={
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <label className="block text-sm font-medium text-steel-700 mb-2">
+                          <span className="flex items-center gap-2">
+                            <svg className="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                             </svg>
-                          }
-                          onChange={(e) => setLength(parseFloat(e.target.value) || 0)}
-                          className="text-center"
-                        />
+                            Length
+                          </span>
+                        </label>
+                        <div className="flex gap-2">
+                          <Input
+                            type="number"
+                            placeholder="Enter length"
+                            onChange={(e) => setLength(parseFloat(e.target.value) || 0)}
+                            className="text-center flex-1"
+                          />
+                          <select
+                            value={lengthUnit}
+                            onChange={(e) => setLengthUnit(e.target.value)}
+                            className="px-3 py-2 border border-steel-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white text-sm"
+                          >
+                            <option value="cm">cm</option>
+                            <option value="mm">mm</option>
+                            <option value="inch">inch</option>
+                            <option value="ft">ft</option>
+                            <option value="m">m</option>
+                          </select>
+                        </div>
+                        <p className="text-xs text-steel-500 mt-1">
+                          = {lengthInCm.toFixed(1)} cm
+                        </p>
                       </div>
+
+                      {/* Breadth Input with Unit Selection */}
                       <div>
-                        <Input
-                          type="number"
-                          placeholder="Breadth (cm)"
-                          label="Breadth"
-                          icon={
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <label className="block text-sm font-medium text-steel-700 mb-2">
+                          <span className="flex items-center gap-2">
+                            <svg className="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                             </svg>
-                          }
-                          onChange={(e) => setBreadth(parseFloat(e.target.value) || 0)}
-                          className="text-center"
-                        />
+                            Breadth
+                          </span>
+                        </label>
+                        <div className="flex gap-2">
+                          <Input
+                            type="number"
+                            placeholder="Enter breadth"
+                            onChange={(e) => setBreadth(parseFloat(e.target.value) || 0)}
+                            className="text-center flex-1"
+                          />
+                          <select
+                            value={breadthUnit}
+                            onChange={(e) => setBreadthUnit(e.target.value)}
+                            className="px-3 py-2 border border-steel-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white text-sm"
+                          >
+                            <option value="cm">cm</option>
+                            <option value="mm">mm</option>
+                            <option value="inch">inch</option>
+                            <option value="ft">ft</option>
+                            <option value="m">m</option>
+                          </select>
+                        </div>
+                        <p className="text-xs text-steel-500 mt-1">
+                          = {breadthInCm.toFixed(1)} cm
+                        </p>
                       </div>
+
+                      {/* Thickness Input with Unit Selection */}
                       <div>
-                        <Input
-                          type="number"
-                          placeholder="Thickness (cm)"
-                          label="Thickness"
-                          icon={
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <label className="block text-sm font-medium text-steel-700 mb-2">
+                          <span className="flex items-center gap-2">
+                            <svg className="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                             </svg>
-                          }
-                          onChange={(e) => setThickness(parseFloat(e.target.value) || 0)}
-                          className="text-center"
-                        />
+                            Thickness
+                          </span>
+                        </label>
+                        <div className="flex gap-2">
+                          <Input
+                            type="number"
+                            placeholder="Enter thickness"
+                            onChange={(e) => setThickness(parseFloat(e.target.value) || 0)}
+                            className="text-center flex-1"
+                          />
+                          <select
+                            value={thicknessUnit}
+                            onChange={(e) => setThicknessUnit(e.target.value)}
+                            className="px-3 py-2 border border-steel-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white text-sm"
+                          >
+                            <option value="cm">cm</option>
+                            <option value="mm">mm</option>
+                            <option value="inch">inch</option>
+                            <option value="ft">ft</option>
+                            <option value="m">m</option>
+                          </select>
+                        </div>
+                        <p className="text-xs text-steel-500 mt-1">
+                          = {thicknessInCm.toFixed(1)} cm
+                        </p>
                       </div>
                     </div>
 
@@ -480,7 +618,7 @@ export default function HomePage() {
                     </div>
 
                     {/* Results */}
-                    {(length > 0 && breadth > 0 && thickness > 0) && (
+                    {(lengthInCm > 0 && breadthInCm > 0 && thicknessInCm > 0) && (
                       <motion.div
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
@@ -507,9 +645,9 @@ export default function HomePage() {
                             </div>
                             <div className="text-center">
                               <div className="font-medium text-steel-900">
-                                {length} × {breadth} × {thickness} cm
+                                {lengthInCm.toFixed(1)} × {breadthInCm.toFixed(1)} × {thicknessInCm.toFixed(1)} cm
                               </div>
-                              <div className="text-steel-500">Dimensions</div>
+                              <div className="text-steel-500">Dimensions (converted)</div>
                             </div>
                             <div className="text-center">
                               <div className="font-medium text-steel-900">
@@ -817,39 +955,53 @@ export default function HomePage() {
                       <CardContent className="p-6 sm:p-8">
                         <h3 className="text-xl sm:text-2xl font-bold text-steel-900 mb-6">Get in Touch</h3>
                         <div className="space-y-4 sm:space-y-6">
-                          <div className="flex items-start gap-4">
-                            <div className="w-12 h-12 bg-primary-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                          <div className="flex items-start gap-3 sm:gap-4">
+                            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-primary-100 rounded-xl flex items-center justify-center flex-shrink-0">
                               <svg className="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                               </svg>
                             </div>
-                            <div>
+                            <div className="min-w-0 flex-1">
                               <h4 className="font-semibold text-steel-900 mb-1">Phone</h4>
-                              <p className="text-steel-600">+91 99853 93064</p>
+                              <p className="text-steel-600 text-sm sm:text-base">
+                                <a href="tel:+919985393064" className="hover:text-primary-600 transition-colors">
+                                  +91 99853 93064
+                                </a>
+                              </p>
                             </div>
                           </div>
-                          <div className="flex items-start gap-4">
-                            <div className="w-12 h-12 bg-accent-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                          <div className="flex items-start gap-3 sm:gap-4">
+                            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-accent-100 rounded-xl flex items-center justify-center flex-shrink-0">
                               <svg className="w-6 h-6 text-accent-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                               </svg>
                             </div>
-                            <div>
+                            <div className="min-w-0 flex-1">
                               <h4 className="font-semibold text-steel-900 mb-1">Email</h4>
-                              <p className="text-steel-600">info@bhavayafabrication.com</p>
-                              <p className="text-steel-600">orders@bhavayafabrication.com</p>
+                              <div className="space-y-1">
+                                <p className="text-steel-600 text-sm sm:text-base break-all">
+                                  <a href="mailto:info@bhavayafabrication.com" className="hover:text-primary-600 transition-colors">
+                                    info@bhavayafabrication.com
+                                  </a>
+                                </p>
+                                <p className="text-steel-600 text-sm sm:text-base break-all">
+                                  <a href="mailto:orders@bhavayafabrication.com" className="hover:text-primary-600 transition-colors">
+                                    orders@bhavayafabrication.com
+                                  </a>
+                                </p>
+                              </div>
                             </div>
                           </div>
-                          <div className="flex items-start gap-4">
-                            <div className="w-12 h-12 bg-success-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                          <div className="flex items-start gap-3 sm:gap-4">
+                            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-success-100 rounded-xl flex items-center justify-center flex-shrink-0">
                               <svg className="w-6 h-6 text-success-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                               </svg>
                             </div>
-                            <div>
+                            <div className="min-w-0 flex-1">
                               <h4 className="font-semibold text-steel-900 mb-1">Address</h4>
-                              <p className="text-steel-600">
+                              <p className="text-steel-600 text-sm sm:text-base leading-relaxed">
                                 Prashant Nagar, Railway Colony,<br />
                                 Moula Ali, Malkajgiri,<br />
                                 Telangana 500040, India
